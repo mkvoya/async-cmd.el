@@ -61,6 +61,19 @@ Then in your Emacs config:
 (async-cmd-kill-and-cleanup my-id)
 #+end_src
 
+*** Wait for multiple commands
+You can wait for multiple async commands to finish and clean them up:
+
+#+begin_src emacs-lisp
+(let ((ids (list
+            (async-cmd-start "/bin/sleep" '("1"))
+            (async-cmd-start "/bin/sleep" '("2")))))
+  (async-cmd-wait-and-cleanup
+   ids
+   (lambda (results)
+     (message "All finished: %s" results))))
+#+end_src
+
 ** Examples
 
 See the ~examples/demo.el~ file for a runnable demo.

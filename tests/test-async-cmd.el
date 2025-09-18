@@ -57,5 +57,28 @@
       (should-not (gethash id async-cmd--table))
       (should-not (buffer-live-p buf)))))
 
+(ert-deftest async-cmd-wait-and-cleanup-test ()
+  "Test async-cmd-wait-and-cleanup waits for multiple commands and cleans them up."
+  (let ((ids (list
+              (async-cmd-start "/bin/sleep" '("1"))
+              (async-cmd-start "/bin/sleep" '("2"))))
+        cb-called)
+    (async-cmd-wait-and-cleanup
+     ids
+     (lambda (results)
+       (setq cb-called results)))
+    ;; 等待所有完成
+    (let ((timeout 25))
+      (while (and (> timeout 0) (not cb-called))
+        (sit-for 0.1)
+        (setq timeout (1- timeout))))
+    (should cb-called)
+    ;; 检查返回的结果
+    (dolist (r cb-called)
+      (should (member (cdr r) '(0)))) ; exit status 0
+    ;; 检查是否真的被清理
+    (dolist (id ids)
+      (should-not (gethash id async-cmd--table)))))
+
 (provide 'test-async-cmd)
 ;;; test-async-cmd.el ends here

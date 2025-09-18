@@ -87,5 +87,31 @@ If CALLBACK is non-nil, it will be called when the process finishes as
       (remhash id async-cmd--table)
       t)))
 
+;;;###autoload
+(defun async-cmd-wait-and-cleanup (id-list callback &optional interval)
+  "Wait for all IDs in ID-LIST to finish, then clean them up and call CALLBACK.
+CALLBACK is called with an alist of (ID . EXIT-STATUS).
+Optional INTERVAL is polling interval in seconds (default 0.5)."
+  (let ((interval (or interval 0.5))
+        (timer nil))
+    (setq timer
+          (run-with-timer 0 interval
+                          (lambda ()
+                            (if (cl-every #'async-cmd-finished-p id-list)
+                                (progn
+                                  ;; collect exit statuses
+                                  (let ((results
+                                         (mapcar (lambda (id)
+                                                   (cons id (async-cmd-exit-status id)))
+                                                 id-list)))
+                                    ;; cleanup
+                                    (dolist (id id-list)
+                                      (async-cmd-kill-and-cleanup id))
+                                    ;; stop timer
+                                    (cancel-timer timer)
+                                    ;; call callback
+                                    (funcall callback results)))
+                              nil))))))
+
 (provide 'async-cmd)
 ;;; async-cmd.el ends here
