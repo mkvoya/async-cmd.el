@@ -1,0 +1,75 @@
+#+TITLE: async-cmd.el
+#+AUTHOR: Mingkai Dong using ChatGPT
+#+OPTIONS: toc:2 num:nil
+
+* async-cmd.el
+A lightweight Emacs library for running asynchronous external commands,
+capturing their output into Emacs buffers, and managing them by identifier.
+
+- No shell involvement (uses ~make-process~ with direct command/args).
+- Output is captured directly in a buffer.
+- Each command is tracked by a unique identifier.
+- You can query status, fetch output, and clean up resources.
+- Supports user-defined callback functions upon process completion.
+
+** Installation
+
+Clone this repository and put ~async-cmd.el~ in your load-path:
+
+#+begin_src shell
+git clone https://github.com/mkvoya/async-cmd.el.git
+#+end_src
+
+Then in your Emacs config:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/async-cmd.el")
+(require 'async-cmd)
+#+end_src
+
+** Usage
+
+*** Start a command
+
+#+begin_src emacs-lisp
+(setq my-id
+      (async-cmd-start
+       "/bin/echo" '("hello world")
+       (lambda (id status buf)
+         (message "Command %s finished with status %d" id status)
+         (when (buffer-live-p buf)
+           (with-current-buffer buf
+             (message "Output: %s" (buffer-string)))))))
+#+end_src
+
+*** Query status
+
+#+begin_src emacs-lisp
+(async-cmd-finished-p my-id)   ;; => t/nil
+(async-cmd-exit-status my-id)  ;; => exit code
+#+end_src
+
+*** Get output buffer
+
+#+begin_src emacs-lisp
+(async-cmd-output-buffer my-id)
+#+end_src
+
+*** Cleanup
+
+#+begin_src emacs-lisp
+(async-cmd-kill-and-cleanup my-id)
+#+end_src
+
+** Examples
+
+See the ~examples/demo.el~ file for a runnable demo.
+
+** Roadmap
+
+- Option to preserve output in a permanent buffer automatically.
+- Integration with ~compilation-mode~.
+
+** License
+
+MIT License. See [[file:LICENSE]].
